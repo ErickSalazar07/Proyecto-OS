@@ -4,3 +4,11 @@
 
 ### __Erick Salazar Suarez__
 ### __Andres Felipe Torres Monroy__
+### __Tomas Ramirez Roa__
+
+## Diagramas de Secuencia
+
+```mermaid
+
+
+```
