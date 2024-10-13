@@ -1,14 +1,17 @@
 #ifndef PUBLISHER_H
 #define PUBLISHER_H
+#include "../news/noticia.h"
 
 struct Publisher{
   char pipeNominal[50];
   char rutaArchivo[50];
-  int tiempoNoticia;
-  char buffer[150];
+  int tiempo;
+  struct Noticia noticias[5];
 };
 
-bool leerEntrada(char**, struct Publisher*);
+void leerArgumentos(char**, struct Publisher*);
+void leerArchivo(struct Publisher*);
 void mostrarInfoPublicador(const struct Publisher*);
+bool noticiaValida(char);
 
 #endif // PUBLISHER_H
