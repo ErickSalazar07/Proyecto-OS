@@ -4,13 +4,15 @@
 #include <string.h>
 #include "publisher.h"
 
+void endLineFile(FILE**);
+
 int main(int argc, char** argv){
-  if(argc < 7){ printf("ERROR: Hay menos de 7 argumentos.\nRevise su entrada\n\n"); exit(-1); }
+  if(argc != 7){ printf("ERROR: Hubo un problema con argumentos, debe haber exactamente 6, contando los flags.\nRevise su entrada\n\n"); exit(-1); }
 
   struct Publisher publicador;
 
   leerArgumentos(argv+1, &publicador);
-  // leerArchivo(&publicador);
+  leerArchivo(&publicador);
   mostrarInfoPublicador(&publicador);
 
   return 0;
@@ -38,16 +40,20 @@ void leerArchivo(struct Publisher* publicador){
 
   if(!archivo){ perror("El archivo tuvo un error.\nPor favor verifique"); exit(-1);}
 
+  publicador->numNoticias = 0;
   for(int i = 0; i < 5; i++){
-    publicador->noticias[i].tipo = fgetc(archivo);
-    printf("\nTipo[%i]: %c\n\n",i,publicador->noticias[i].tipo);
-    if(!noticiaValida(publicador->noticias[i].tipo)){ continue; }
+    
+    if((aux = fgetc(archivo)) == EOF) break;
+    if(!noticiaValida(aux)) continue;
+
+    publicador->noticias[i].tipo = aux;
+    publicador->numNoticias++;
     fseek(archivo,2,SEEK_CUR);
+
     for(int j = 0; j < 59; j++){
-      if((aux = fgetc(archivo)) == '.'){ publicador->noticias[i].contenido[j] = '\0'; break;}
+      if((aux = fgetc(archivo)) == '.'){ fseek(archivo,1,SEEK_CUR); publicador->noticias[i].contenido[j] = '\0'; break;}
       publicador->noticias[i].contenido[j] = aux;
     }
-    while(fgetc(archivo) != '\n');
     publicador->noticias[i].contenido[59] = '\0';
   }
 }
@@ -62,9 +68,17 @@ void mostrarInfoPublicador(const struct Publisher* publicador){
   printf("Tiempo: %i\n\n", publicador->tiempo);
   puts("\n\t\tINFORMACION NOTICIAS\n");
 
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < publicador->numNoticias; i++){
     printf("Noticia[%i]:\n",i);
     printf("       Tipo: %c\n", publicador->noticias[i].tipo);
     printf("  Contenido: %s\n\n", publicador->noticias[i].contenido);
+  }
+}
+
+void endLineFile(FILE** archivo){
+  char c = 'A';
+
+  while(c != '\n' && c != '\0'){
+    c = fgetc(*archivo);
   }
 }

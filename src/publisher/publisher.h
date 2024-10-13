@@ -6,6 +6,7 @@ struct Publisher{
   char pipeNominal[50];
   char rutaArchivo[50];
   int tiempo;
+  unsigned int numNoticias;
   struct Noticia noticias[5];
 };
 
