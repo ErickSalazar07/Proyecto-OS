@@ -70,8 +70,8 @@ void mostrarInfoPublicador(const struct Publisher* publicador){
 
   for(int i = 0; i < publicador->numNoticias; i++){
     printf("Noticia[%i]:\n",i);
-    printf("       Tipo: %c\n", publicador->noticias[i].tipo);
-    printf("  Contenido: %s\n\n", publicador->noticias[i].contenido);
+    printf("      Tipo: %c\n", publicador->noticias[i].tipo);
+    printf(" Contenido: %s\n\n", publicador->noticias[i].contenido);
   }
 }
 
