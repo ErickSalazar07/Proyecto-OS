@@ -34,3 +34,35 @@ void mostrarInfoSistema(const struct System* sistema){
     printf("Pipe Suscriptor: %s\n",sistema->pipeNomP);
     printf("Time F: %lf\n\n",sistema->timeF);
 }
+
+void enviarMensaje(const struct System* sistema,const char* mensaje){
+  int fd=open(sistema->pipeNomP, O_WRONLY);
+  if(fd == -1){
+    perror("Error al abrir la tuberia del publisher para escribir");
+    return;
+  }
+  if(write(fd,mensaje,strlen(mensaje) + 1) == -1){
+    perror("Error al escribir en la tuberia del publisher");
+  }
+  else{
+    printf("Mensaje enviado: %\n",mensaje);
+  }
+  close(fd);
+}
+void recibirMensaje(const struct System* sistema) {
+    int fd = open(sistema->pipeNomS, O_RDONLY);
+    if (fd == -1) {
+        perror("Error al abrir la tubería del suscriptor para lectura");
+        return;
+    }
+
+    char buffer[50];
+    ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
+    if (bytesRead > 0) {
+        printf("Mensaje recibido: %s\n", buffer);
+    } else {
+        perror("Error al leer de la tubería del suscriptor");
+    }
+
+    close(fd);
+}
