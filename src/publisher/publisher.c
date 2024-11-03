@@ -7,10 +7,9 @@
 void endLineFile(FILE**);
 
 int main(int argc, char** argv){
-  if(argc != 7){ printf("ERROR: Hubo un problema con argumentos, debe haber exactamente 6, contando los flags.\nRevise su entrada\n\n"); exit(-1); }
+  if(argc != 7) perror("ERROR: Argumentos, debe haber exactamente 6, contando los flags.\nRevise su entrada\n\n"), exit(EXIT_FAILURE);
 
   struct Publisher publicador;
-
   leerArgumentos(argv+1, &publicador);
   leerArchivo(&publicador);
   mostrarInfoPublicador(&publicador);
@@ -29,16 +28,15 @@ void leerArgumentos(char** string, struct Publisher* publicador){
             break;
           case 't': publicador->tiempo = atoi(string[i+1]);
             break;
-          default:
+          default: perror("\n\nLa bandera ingresada, no se reconoce.\nVerifique su entrada\a\n"),exit(-1);
         }
 }
 
 void leerArchivo(struct Publisher* publicador){
   FILE* archivo = fopen(publicador->rutaArchivo,"r");
-  
   char aux;
 
-  if(!archivo){ perror("El archivo tuvo un error.\nPor favor verifique"); exit(-1);}
+  if(!archivo) perror("El archivo tuvo un error.\nPor favor verifique"),exit(-2);
 
   publicador->numNoticias = 0;
   for(int i = 0; i < 5; i++){
@@ -51,7 +49,11 @@ void leerArchivo(struct Publisher* publicador){
     fseek(archivo,2,SEEK_CUR);
 
     for(int j = 0; j < 59; j++){
-      if((aux = fgetc(archivo)) == '.'){ fseek(archivo,1,SEEK_CUR); publicador->noticias[i].contenido[j] = '\0'; break;}
+      if((aux = fgetc(archivo)) == '.'){ 
+        fseek(archivo,1,SEEK_CUR); 
+        publicador->noticias[i].contenido[j] = '\0'; 
+        break;
+      }
       publicador->noticias[i].contenido[j] = aux;
     }
     publicador->noticias[i].contenido[59] = '\0';

@@ -4,13 +4,14 @@ CO=gcc -std=c11 -Wall -Werror -c # Variable para compilar archivos .c a archivos
 # comentario
 
 # Ejecuta el archivo
-all: main.o
-	@$(CEXE) main *.o
-	@echo "\nEl archivo \"main\" ha sido creado\n"
+all: publisher suscriber system 
+	@echo "\nTodos los archivos ejecutables han sido creados con exito.\n"
 
 clear:
 	@rm *.o
-	@rm main
+	@rm publisher
+	@rm system
+	@rm suscriber
 	@echo "\nArchivos eliminados\n"
 
 # Comandos individuales
