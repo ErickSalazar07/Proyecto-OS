@@ -10,6 +10,8 @@ struct System{
 
 void initSisComunicacion(struct System*);
 void leerArgumentos(char**, struct System*);
+void escucharMensajes(struct System*);
+void cerrarConexion(struct System*);
 void mostrarInfoSistema(const struct System*);
 
 #endif // SYSTEM_H

@@ -8,20 +8,21 @@
 #include "suscriber.h"
 
 int main(int argc, char** argv) {
-    if(argc-1 != 2) perror("\n\nLa canitidad de parametros no coincide.\nRevise\n\a"),exit(EXIT_FAILURE);
-    
-    struct Suscriber suscriptor;
-    leerArgumentos(argv+1,&suscriptor);
-    mostrarInfoSuscriptor(&suscriptor);
-    initSuscriptor(&suscriptor);
-    return 0;
+  if(argc-1 != 2) perror("\n\nLa canitidad de parametros no coincide.\nRevise\n\a"),exit(EXIT_FAILURE);
+  
+  struct Suscriber suscriptor;
+  leerArgumentos(argv+1,&suscriptor);
+  mostrarInfoSuscriptor(&suscriptor);
+  initSuscriptor(&suscriptor);
+  return 0;
 }
 
 void initSuscriptor(struct Suscriber* suscriptor) {
   int fileDes;
+  const unsigned int PIPEMODE = 0222;
   char message[100] = {0};
 
-  while((fileDes = open(suscriptor->pipeNominal,0666)) == -1);
+  while((fileDes = open(suscriptor->pipeNominal,PIPEMODE)) == -1);
 
   while((read(fileDes,message,100)) > 0) {
     printf("%s\n",message);  
@@ -32,12 +33,6 @@ void initSuscriptor(struct Suscriber* suscriptor) {
     memset(message,0,sizeof(message));
   }
   close(fileDes);
-}
-
-void limpiarBuffer(char* buffer) {
-  for(int i = 0; buffer[i]; i++) {
-    buffer[i] = '\0';
-  }
 }
 
 void leerArgumentos(char** argv, struct Suscriber* suscriptor) {
