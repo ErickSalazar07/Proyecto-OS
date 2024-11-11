@@ -5,11 +5,12 @@
 struct Publisher{
   char pipeNominal[50];
   char rutaArchivo[50];
-  int tiempo;
+  int timeN;
   unsigned int numNoticias;
   struct Noticia noticias[5];
 };
 
+void initPublicador(struct Publisher*);
 void leerArgumentos(char**, struct Publisher*);
 void leerArchivo(struct Publisher*);
 void mostrarInfoPublicador(const struct Publisher*);

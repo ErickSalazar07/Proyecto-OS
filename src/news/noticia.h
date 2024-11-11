@@ -3,7 +3,7 @@
 
 struct Noticia{
   char tipo;
-  char contenido[60];
+  char contenido[80];
 };
 
 #endif // NOTICIA_H

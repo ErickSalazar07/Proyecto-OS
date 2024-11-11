@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include "publisher.h"
@@ -7,7 +10,7 @@
 void endLineFile(FILE**);
 
 int main(int argc, char** argv){
-  if(argc != 7) perror("ERROR: Argumentos, debe haber exactamente 6, contando los flags.\nRevise su entrada\n\n"), exit(EXIT_FAILURE);
+  if(argc-1 != 6) perror("ERROR: Argumentos, debe haber exactamente 6, contando los flags.\nRevise su entrada\n\n"), exit(EXIT_FAILURE);
 
   struct Publisher publicador;
   leerArgumentos(argv+1, &publicador);
@@ -26,16 +29,34 @@ void leerArgumentos(char** string, struct Publisher* publicador){
             break;
           case 'f': strncpy(publicador->rutaArchivo,string[i+1],50);
             break;
-          case 't': publicador->tiempo = atoi(string[i+1]);
+          case 't': publicador->timeN = atoi(string[i+1]);
             break;
           default: perror("\n\nLa bandera ingresada, no se reconoce.\nVerifique su entrada\a\n"),exit(-1);
         }
+}
+
+void initPublicador(struct Publisher* publicador) {
+  int fileDes;
+  char mensaje[100] = {0};
+
+
+
+  while((fileDes = open(publicador->pipeNominal, 0666)) == -1);
+
+  for(int i = 0; i < 5; i++) {
+    mensaje[0] = publicador->noticias[i].tipo;
+    mensaje[1] = ':';
+    strcpy(mensaje+2,publicador->noticias[i].contenido);
+    write(fileDes,publicador->noticias[i].contenido,mensaje);
+    sleep(publicador->timeN);
+  }
 }
 
 void leerArchivo(struct Publisher* publicador){
   FILE* archivo = fopen(publicador->rutaArchivo,"r");
   char aux;
 
+  if(!archivo) perror("El archivo tuvo un error.\nPor favor verifique"),exit(-2);
   if(!archivo) perror("El archivo tuvo un error.\nPor favor verifique"),exit(-2);
 
   publicador->numNoticias = 0;
@@ -54,6 +75,11 @@ void leerArchivo(struct Publisher* publicador){
         publicador->noticias[i].contenido[j] = '\0'; 
         break;
       }
+      if((aux = fgetc(archivo)) == '.'){ 
+        fseek(archivo,1,SEEK_CUR); 
+        publicador->noticias[i].contenido[j] = '\0'; 
+        break;
+      }
       publicador->noticias[i].contenido[j] = aux;
     }
     publicador->noticias[i].contenido[59] = '\0';
@@ -67,7 +93,7 @@ void mostrarInfoPublicador(const struct Publisher* publicador){
 
   printf("Pipe: %s\n",publicador->pipeNominal);
   printf("File: %s\n",publicador->rutaArchivo);
-  printf("Tiempo: %i\n\n", publicador->tiempo);
+  printf("Tiempo: %i\n\n", publicador->timeN);
   puts("\n\t\tINFORMACION NOTICIAS\n");
 
   for(int i = 0; i < publicador->numNoticias; i++){

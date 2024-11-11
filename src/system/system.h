@@ -7,6 +7,8 @@ struct System{
     double timeF;
 };
 
+
+void initSisComunicacion(struct System*);
 void leerArgumentos(char**, struct System*);
 void mostrarInfoSistema(const struct System*);
 

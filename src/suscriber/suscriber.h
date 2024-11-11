@@ -6,7 +6,9 @@ struct Suscriber{
   char topicos[5];
 };
 
+void initSuscriptor(struct Suscriber*);
 void leerArgumentos(char**, struct Suscriber*);
 void mostrarInfoSuscriptor(const struct Suscriber*);
+void limpiarBuffer(char*);
 
 #endif  // SUSCRIBER_H
