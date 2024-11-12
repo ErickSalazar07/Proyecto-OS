@@ -13,26 +13,44 @@ int main(int argc, char** argv) {
   struct Suscriber suscriptor;
   leerArgumentos(argv+1,&suscriptor);
   mostrarInfoSuscriptor(&suscriptor);
-  initSuscriptor(&suscriptor);
+  escucharMensajes(&suscriptor);
   return 0;
 }
 
-void initSuscriptor(struct Suscriber* suscriptor) {
+void escucharMensajes(struct Suscriber* suscriptor) {
   int fileDes;
-  const unsigned int PIPEMODE = 0222;
+  const unsigned int PIPEMODE = 0666;
   char message[100] = {0};
 
   while((fileDes = open(suscriptor->pipeNominal,PIPEMODE)) == -1);
 
   while((read(fileDes,message,100)) > 0) {
-    printf("%s\n",message);  
     if(strcmp(message,"END") == 0) { 
       printf("\n\nLa comunicacion ha terminado\n\n");
       break;
     }
+    printf("%s\n",message);  
     memset(message,0,sizeof(message));
   }
   close(fileDes);
+}
+
+void pedirTopicos(struct Suscriber* suscriptor) {
+  int numTopicos = 0;
+  int deseaIngresarTopico = 1;
+  char topico = '\0';
+  printf("\t\t\033[91mBIENVENIDO AL PROGRAMA SUSCRIPTOR\033[0m\n\n");
+  printf("\n\033[31mDebe suscribirse al menos a 1 topico\033[0m\n\n");
+  
+  while(deseaIngresarTopico || numTopicos <= 0) {
+    if(deseaIngresarTopico) {
+      printf("Por favor dijite la letra del topico al que se quiere suscribir. ej['A','E','C','P','S']: ");
+      scanf("%c",&topico);
+    }
+    printf("Desea ingresar otro topico 1 para si, 0 para no: ");
+    scanf("%i",&deseaIngresarTopico);
+  }
+
 }
 
 void leerArgumentos(char** argv, struct Suscriber* suscriptor) {
@@ -49,4 +67,11 @@ void leerArgumentos(char** argv, struct Suscriber* suscriptor) {
 void mostrarInfoSuscriptor(const struct Suscriber* suscriptor) {
   printf("\n\t\t\tINFORMACION DEL SUSCRIPTOR\n\n");
   printf("Pipe: %s\n\n",suscriptor->pipeNominal);
+}
+
+unsigned int perteneMensaje(struct Suscriber* suscriptor,char topico) {
+  for(int i = 0; i < suscriptor->numTopicos; i++) 
+    if(suscriptor->topicos[i] == topico) 
+      return 1;
+  return 0;
 }

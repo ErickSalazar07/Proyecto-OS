@@ -14,8 +14,6 @@ int main(int argc, char** argv) {
   leerArgumentos(argv+1,&sistema);
   mostrarInfoSistema(&sistema);
   initSisComunicacion(&sistema);
-  escucharMensajes(&sistema);
-  cerrarConexion(&sistema);
 
   return 0;
 }
@@ -28,25 +26,51 @@ void initSisComunicacion(struct System* sistema) {
 
   mkfifo(sistema->pipeNomP,FILEMODE);
   mkfifo(sistema->pipeNomS,FILEMODE);
+
+  escucharMensajes(sistema);
 }
 
+
 void escucharMensajes(struct System* sistema) {
-  const unsigned int PIPEMODEPUB = 0444;
+  const unsigned int PIPEMODEPUB = 0222;
   const unsigned int PIPEMODESUS = 0666;
-  int fileDesPublicador, fileDesSuscriptor;
+  int fileDesPublicador;
+  int fileDesSuscriptor;
   char mensaje[100];
 
   while((fileDesPublicador = open(sistema->pipeNomP,PIPEMODEPUB)) == -1);
   while((fileDesSuscriptor = open(sistema->pipeNomS,PIPEMODESUS)) == -1);
 
-  while((read(fileDesSuscriptor,mensaje,sizeof(mensaje))) > 0) {
-    write(fileDesPublicador,mensaje,sizeof(mensaje));
+  while((read(fileDesPublicador,mensaje,sizeof(mensaje))) > 0) {
+    if(strcmp(mensaje,"END") == 0) {
+      break;
+    }
+
+    switch(mensaje[0]) {
+      case 'A': printf("\nMensaje %s va para topico Arte\n",mensaje+2);
+      break;
+      case 'E': printf("\nMensaje %s va para topico Farandula\n",mensaje+2);
+      break;
+      case 'C': printf("\nMensaje %s va para topico Ciencia\n",mensaje+2);
+      break;
+      case 'P': printf("\nMensaje %s va para topico Politica\n",mensaje+2);
+      break;
+      case 'S': printf("\nMensaje %s va para topico Sucesos\n",mensaje+2);
+      break;
+    }
+    write(fileDesSuscriptor,mensaje,sizeof(mensaje));
+    memset(mensaje,0,sizeof(mensaje));
   }
+  write(fileDesSuscriptor,"END",strlen("END"));
+  close(fileDesPublicador);
+  close(fileDesSuscriptor);
+  cerrarConexion(sistema);
 
 }
 
 void cerrarConexion(struct System* sistema) {
-
+  unlink(sistema->pipeNomP);
+  unlink(sistema->pipeNomS);
 }
 
 void leerArgumentos(char** argv, struct System* sistema) {

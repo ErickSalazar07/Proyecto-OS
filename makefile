@@ -8,7 +8,6 @@ all: publisher suscriber system
 	@printf "\nTodos los archivos ejecutables han sido creados con exito.\n"
 
 clear:
-	@rm *.o
 	@rm publisher
 	@rm system
 	@rm suscriber
@@ -17,15 +16,18 @@ clear:
 # Comandos individuales
 publisher: publisher.o
 	@$(CEXE) publisher publisher.o
+	@rm publisher.o
 	@printf "\nEl archivo \"publisher\" ha sido creado\n"
 
 
 suscriber: suscriber.o
 	@$(CEXE) suscriber suscriber.o
+	@rm suscriber.o
 	@printf "\nEl archivo \"suscriber\" ha sido creado\n"
 
 system: system.o
 	@$(CEXE) system system.o
+	@rm system.o
 	@printf "\nEl archivo \"system\" ha sido creado\n"
 
 

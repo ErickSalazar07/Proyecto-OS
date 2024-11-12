@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   leerArgumentos(argv+1, &publicador);
   leerArchivo(&publicador);
   mostrarInfoPublicador(&publicador);
-  initPublicador(&publicador);
+  escribirMensajes(&publicador);
 
   return 0;
 }
@@ -35,12 +35,12 @@ void leerArgumentos(char** argv, struct Publisher* publicador) {
         }
 }
 
-void initPublicador(struct Publisher* publicador) {
+void escribirMensajes(struct Publisher* publicador) {
   int fileDes;
   const unsigned int PIPEMODE = 0666;
   char mensaje[100] = {0};
 
-  while((fileDes = open(publicador->pipeNominal, PIPEMODE)) == -1) { sleep(1); };
+  while((fileDes = open(publicador->pipeNominal, PIPEMODE)) == -1);
 
   printf("\nArchivo: %s abierto\n\n",publicador->pipeNominal);
   for(int i = 0; i < publicador->numNoticias; i++) {
@@ -53,7 +53,7 @@ void initPublicador(struct Publisher* publicador) {
     sleep(publicador->timeN);
     memset(mensaje,0,sizeof(mensaje));
   }
-
+  write(fileDes,"END",strlen("END"));
   close(fileDes);
 }
 

@@ -7,6 +7,13 @@ struct System{
     double timeF;
 };
 
+enum TIPO_TOPICO {
+  A, // arte
+  E, // farandula y espectaculo
+  C, // ciencia
+  P, // politica
+  S // sucesos
+};
 
 void initSisComunicacion(struct System*);
 void leerArgumentos(char**, struct System*);
