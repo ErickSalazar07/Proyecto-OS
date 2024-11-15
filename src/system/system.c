@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>
+#include "SusSistema/SusSistema.h"
 #include "system.h"
 
 int main(int argc, char** argv) {
@@ -13,19 +14,68 @@ int main(int argc, char** argv) {
   struct System sistema;
   leerArgumentos(argv+1,&sistema);
   mostrarInfoSistema(&sistema);
-  initSisComunicacion(&sistema);
+  crearPipesSusSistema(&sistema);
+  limpiarPipes(&sistema);
 
   return 0;
 }
 
+void limpiarPipes(struct System* sistema) {
+  unlink(sistema->pipeNomP);
+  unlink(sistema->pipeNomS);
+}
+
+void crearPipesSusSistema(struct System* sistema) {
+  const unsigned int PIPEMODE = 0666;
+  int fileDesPipeNomS;
+  struct SusSistema auxSus;
+  char mensaje[20] = {0};
+  
+  unlink(sistema->pipeNomS);
+  mkfifo(sistema->pipeNomS,PIPEMODE);
+  
+  while((fileDesPipeNomS = open(sistema->pipeNomS,PIPEMODE)) == -1);
+
+  read(fileDesPipeNomS,mensaje,sizeof(mensaje));
+  createSusSistema(&auxSus,mensaje);
+  mostrarSusSistema(&auxSus);
+
+  write(auxSus.filePipe,"Hola que tal",strlen("Hola que tal"));
+  sleep(1);
+  write(auxSus.filePipe,"END",strlen("END"));
+  close(auxSus.filePipe);
+  unlink(auxSus.nombrePipe);
+}
+
+void createSusSistema(struct SusSistema* suscriptorSis, char* mensaje) {
+  int i;
+  char id[9];
+
+  for(i = 0; mensaje[i] != ':'; i++) 
+    id[i] = mensaje[i];
+    
+  suscriptorSis->idSus = atoi(id);
+
+  memset(id,0,sizeof(id));
+  memset(suscriptorSis->nombrePipe,0,10);
+  sprintf(id,"%d",suscriptorSis->idSus);
+  strcpy(suscriptorSis->nombrePipe,id);
+
+  strcpy(suscriptorSis->topicos,mensaje+i+1);
+  unlink(id);
+  mkfifo(id,0666);
+  suscriptorSis->filePipe = open(id,0666);
+}
+
+
 void initSisComunicacion(struct System* sistema) {
-  const unsigned int FILEMODE = 0666;
+  const unsigned int PIPEMODE = 0666;
 
   unlink(sistema->pipeNomP);
   unlink(sistema->pipeNomS);
 
-  mkfifo(sistema->pipeNomP,FILEMODE);
-  mkfifo(sistema->pipeNomS,FILEMODE);
+  mkfifo(sistema->pipeNomP,PIPEMODE);
+  mkfifo(sistema->pipeNomS,PIPEMODE);
 
   escucharMensajes(sistema);
 }
@@ -90,7 +140,7 @@ void leerArgumentos(char** argv, struct System* sistema) {
 
 void mostrarInfoSistema(const struct System* sistema) {
   printf("\n\nINFORMACION DEL SISTEMA\n\n");
-  printf("Pipe Publicador: %s\n",sistema->pipeNomS);
-  printf("Pipe Suscriptor: %s\n",sistema->pipeNomP);
+  printf("Pipe Publicador: %s\n",sistema->pipeNomP);
+  printf("Pipe Suscriptor: %s\n",sistema->pipeNomS);
   printf("Time F: %0.2lf\n\n",sistema->timeF);
 }

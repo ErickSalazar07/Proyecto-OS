@@ -12,8 +12,11 @@ int main(int argc, char** argv) {
   
   struct Suscriber suscriptor;
   leerArgumentos(argv+1,&suscriptor);
+  pedirTopicos(&suscriptor);
+  enviarTopicos(&suscriptor);
   mostrarInfoSuscriptor(&suscriptor);
   escucharMensajes(&suscriptor);
+
   return 0;
 }
 
@@ -21,7 +24,7 @@ void escucharMensajes(struct Suscriber* suscriptor) {
   int fileDes;
   const unsigned int PIPEMODE = 0666;
   char message[100] = {0};
-
+  printf("\nAbriendo: %s\n",suscriptor->pipeNominal);
   while((fileDes = open(suscriptor->pipeNominal,PIPEMODE)) == -1);
 
   while((read(fileDes,message,100)) > 0) {
@@ -35,22 +38,86 @@ void escucharMensajes(struct Suscriber* suscriptor) {
   close(fileDes);
 }
 
+void enviarTopicos(struct Suscriber* suscriptor) {
+  int fileDesPipeNomS;
+  char mensaje[20] = {0};
+  const unsigned int PIPEMODE = 0666;
+
+  while((fileDesPipeNomS = open(suscriptor->pipeNominal,PIPEMODE)) == -1);
+
+  sprintf(mensaje,"%d:",getpid());
+  strncpy(mensaje+strlen(mensaje),suscriptor->topicos,suscriptor->numTopicos);
+  printf("Mensaje: %s\n\n",mensaje);
+  if(write(fileDesPipeNomS,mensaje,20) == -1) printf("Hubo un error");
+  memset(suscriptor->pipeNominal,0,50);
+  sprintf(suscriptor->pipeNominal,"%d",getpid());
+}
+
+int topicoIngresado(char topico, char* topicos) {
+  for(int i = 0; topicos[i]; i++) 
+    if(topicos[i] == topico) {
+      printf("\n\nDijite otro topico, ya que el dijitado, ya se encuentra registrado.\n\n");
+      return 1;
+    }
+  return 0;
+}
+
 void pedirTopicos(struct Suscriber* suscriptor) {
   int numTopicos = 0;
-  int deseaIngresarTopico = 1;
-  char topico = '\0';
+  int deseaIngresarTopico = 0;
+
   printf("\t\t\033[91mBIENVENIDO AL PROGRAMA SUSCRIPTOR\033[0m\n\n");
   printf("\n\033[31mDebe suscribirse al menos a 1 topico\033[0m\n\n");
   
-  while(deseaIngresarTopico || numTopicos <= 0) {
-    if(deseaIngresarTopico) {
-      printf("Por favor dijite la letra del topico al que se quiere suscribir. ej['A','E','C','P','S']: ");
-      scanf("%c",&topico);
-    }
-    printf("Desea ingresar otro topico 1 para si, 0 para no: ");
+  do {
+    suscriptor->topicos[numTopicos++] = obtenerTopico(suscriptor);
+    printf("Desea ingresar otro topico, dijite 1 para si 0 para no.\nDijite: ");
     scanf("%i",&deseaIngresarTopico);
+  } while(deseaIngresarTopico && (1 <= numTopicos && numTopicos <= 5));
+
+  suscriptor->numTopicos = numTopicos;
+}
+
+char obtenerTopico(struct Suscriber* suscriptor) {
+  int opc;
+  char c;
+
+opciones:
+  printf("1. Para Arte 'A'\n");
+  printf("2. Para Farandula y Espectaculo 'E'\n");
+  printf("3. Para Ciencia 'C'\n");
+  printf("4. Para Politica 'P'\n");
+  printf("5. Para Sucesos 'S'\n");
+  printf("Dijite: ");
+  while(scanf("%i",&opc) != 1) {
+    printf("Dijite un numero: ");
+    while((c = getchar() != '\n' && c != EOF));
+  }
+  
+  switch(opc) {
+    case 1:  
+      return 'A';
+    break;
+    case 2: c = 'E';
+    break;
+    case 3: c = 'C';
+    break;
+    case 4: c = 'P';
+    break;
+    case 5: c = 'S';
+    break;
+    default: printf("\n\nDijite un una opcion valida\n\n"); goto opciones;
   }
 
+  if(!topicoIngresado(c,suscriptor->topicos))
+    return c;
+  goto opciones;
+}
+
+int topicoValido(char topico) {
+  if(topico == 'A' || topico == 'E' || topico == 'C' || topico == 'P' || topico == 'S') return 1;
+  printf("\n\nDijite un topico valido.\n\n");
+  return 0;
 }
 
 void leerArgumentos(char** argv, struct Suscriber* suscriptor) {
@@ -65,11 +132,22 @@ void leerArgumentos(char** argv, struct Suscriber* suscriptor) {
 }
 
 void mostrarInfoSuscriptor(const struct Suscriber* suscriptor) {
+  char procesIdString[20] = {0};
+
+  sprintf(procesIdString,"%d:",getpid());
+  strncpy(procesIdString+strlen(procesIdString),suscriptor->topicos,suscriptor->numTopicos);
+
   printf("\n\t\t\tINFORMACION DEL SUSCRIPTOR\n\n");
+  printf("Linea a enviar por pipe: %s\n",procesIdString);
+  printf("NumTopicos: %i\n",suscriptor->numTopicos);
   printf("Pipe: %s\n\n",suscriptor->pipeNominal);
+  printf("\n\n\t\t\tTOPICOS\n\n");
+
+  for(int i = 0; i < suscriptor->numTopicos; i++) 
+    printf("[%i]: %c\n",i,suscriptor->topicos[i]);
 }
 
-unsigned int perteneMensaje(struct Suscriber* suscriptor,char topico) {
+unsigned int perteneceMensaje(struct Suscriber* suscriptor,char topico) {
   for(int i = 0; i < suscriptor->numTopicos; i++) 
     if(suscriptor->topicos[i] == topico) 
       return 1;

@@ -15,8 +15,12 @@ enum TIPO_TOPICO {
   S // sucesos
 };
 
+void crearPipesSusSistema(struct System*);
+void enviarTopicos(struct System*);
 void initSisComunicacion(struct System*);
+void limpiarPipes(struct System*);
 void leerArgumentos(char**, struct System*);
+void createSusSistema(struct SusSistema*, char*);
 void escucharMensajes(struct System*);
 void cerrarConexion(struct System*);
 void mostrarInfoSistema(const struct System*);
