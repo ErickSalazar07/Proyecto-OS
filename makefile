@@ -25,9 +25,9 @@ suscriber: suscriber.o
 	@rm suscriber.o
 	@printf "\nEl archivo \"suscriber\" ha sido creado\n"
 
-system: system.o SusSistema.o
-	@$(CEXE) system system.o SusSistema.o
-	@rm system.o SusSistema.o
+system: system.o SusSistema.o stack.o
+	@$(CEXE) system system.o SusSistema.o stack.o
+	@rm system.o SusSistema.o stack.o
 	@printf "\nEl archivo \"system\" ha sido creado\n"
 
 
@@ -46,6 +46,9 @@ system.o: src/system/system.c
 
 SusSistema.o: src/system/SusSistema/SusSistema.c
 	@$(CO) src/system/SusSistema/SusSistema.c
+
+stack.o: src/system/stack/stack.c
+	@$(CO) src/system/stack/stack.c
 
 # Eliminacion de archivos individuales y sus dependencias
 rm_publisher:

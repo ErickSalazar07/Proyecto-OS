@@ -12,17 +12,21 @@ int main(int argc, char** argv) {
   if(argc-1 != 6) perror("\n\nLa cantidad de parametros no es correcta.\nRevise\a\n"),exit(EXIT_FAILURE);
 
   struct System sistema;
+  initSisComunicacion(&sistema);
   leerArgumentos(argv+1,&sistema);
   mostrarInfoSistema(&sistema);
   crearPipesSusSistema(&sistema);
+  escucharMensajes(&sistema);
   limpiarPipes(&sistema);
 
   return 0;
 }
 
 void limpiarPipes(struct System* sistema) {
+  printf("\n\nCERRANDO COMUNICACION\n\n\n");
   unlink(sistema->pipeNomP);
   unlink(sistema->pipeNomS);
+  limpiarStack(&sistema->suscritos);
 }
 
 void crearPipesSusSistema(struct System* sistema) {
@@ -36,91 +40,56 @@ void crearPipesSusSistema(struct System* sistema) {
   
   while((fileDesPipeNomS = open(sistema->pipeNomS,PIPEMODE)) == -1);
 
-  read(fileDesPipeNomS,mensaje,sizeof(mensaje));
-  createSusSistema(&auxSus,mensaje);
-  mostrarSusSistema(&auxSus);
-
-  write(auxSus.filePipe,"Hola que tal",strlen("Hola que tal"));
-  sleep(1);
-  write(auxSus.filePipe,"END",strlen("END"));
-  close(auxSus.filePipe);
-  unlink(auxSus.nombrePipe);
+  while(read(fileDesPipeNomS,mensaje,sizeof(mensaje)) > 0) {
+    printf("%s\n",mensaje);
+    if(strcmp(mensaje,"END") == 0) break;
+    createSusSistema(&auxSus,mensaje);
+    push(&sistema->suscritos,&auxSus);
+    limpiarSusSistema(&auxSus);
+    memset(mensaje,0,sizeof(mensaje));
+  }
+  close(fileDesPipeNomS);
 }
-
-void createSusSistema(struct SusSistema* suscriptorSis, char* mensaje) {
-  int i;
-  char id[9];
-
-  for(i = 0; mensaje[i] != ':'; i++) 
-    id[i] = mensaje[i];
-    
-  suscriptorSis->idSus = atoi(id);
-
-  memset(id,0,sizeof(id));
-  memset(suscriptorSis->nombrePipe,0,10);
-  sprintf(id,"%d",suscriptorSis->idSus);
-  strcpy(suscriptorSis->nombrePipe,id);
-
-  strcpy(suscriptorSis->topicos,mensaje+i+1);
-  unlink(id);
-  mkfifo(id,0666);
-  suscriptorSis->filePipe = open(id,0666);
-}
-
 
 void initSisComunicacion(struct System* sistema) {
-  const unsigned int PIPEMODE = 0666;
-
-  unlink(sistema->pipeNomP);
-  unlink(sistema->pipeNomS);
-
-  mkfifo(sistema->pipeNomP,PIPEMODE);
-  mkfifo(sistema->pipeNomS,PIPEMODE);
-
-  escucharMensajes(sistema);
+  memset(sistema->pipeNomP,0,50);
+  memset(sistema->pipeNomS,0,50);
+  initStack(&sistema->suscritos);
+  sistema->timeF = 0.0;
 }
 
 
 void escucharMensajes(struct System* sistema) {
-  const unsigned int PIPEMODEPUB = 0222;
-  const unsigned int PIPEMODESUS = 0666;
-  int fileDesPublicador;
-  int fileDesSuscriptor;
-  char mensaje[100];
+  const unsigned int FILE_DES_PUB_MODE = 0666;
+  int fileDesPub = 0666;
+  char mensaje[80];
 
-  while((fileDesPublicador = open(sistema->pipeNomP,PIPEMODEPUB)) == -1);
-  while((fileDesSuscriptor = open(sistema->pipeNomS,PIPEMODESUS)) == -1);
+  unlink(sistema->pipeNomP);
+  mkfifo(sistema->pipeNomP,FILE_DES_PUB_MODE);
 
-  while((read(fileDesPublicador,mensaje,sizeof(mensaje))) > 0) {
+  while((fileDesPub = open(sistema->pipeNomP,FILE_DES_PUB_MODE)) == -1);
+
+  while((read(fileDesPub,mensaje,sizeof(mensaje))) > 0) {
+    printf("%s\n",mensaje);
     if(strcmp(mensaje,"END") == 0) {
-      break;
+      close(fileDesPub);
+      return;
     }
-
     switch(mensaje[0]) {
-      case 'A': printf("\nMensaje %s va para topico Arte\n",mensaje+2);
+      case 'A': sendMessage(&sistema->suscritos,'A',mensaje+2,sizeof(mensaje)-2);
       break;
-      case 'E': printf("\nMensaje %s va para topico Farandula\n",mensaje+2);
+      case 'E': sendMessage(&sistema->suscritos,'E',mensaje+2,sizeof(mensaje)-2);
       break;
-      case 'C': printf("\nMensaje %s va para topico Ciencia\n",mensaje+2);
+      case 'C': sendMessage(&sistema->suscritos,'C',mensaje+2,sizeof(mensaje)-2);
       break;
-      case 'P': printf("\nMensaje %s va para topico Politica\n",mensaje+2);
+      case 'P': sendMessage(&sistema->suscritos,'P',mensaje+2,sizeof(mensaje)-2);
       break;
-      case 'S': printf("\nMensaje %s va para topico Sucesos\n",mensaje+2);
+      case 'S': sendMessage(&sistema->suscritos,'S',mensaje+2,sizeof(mensaje)-2);
       break;
     }
-    write(fileDesSuscriptor,mensaje,sizeof(mensaje));
     memset(mensaje,0,sizeof(mensaje));
   }
-  write(fileDesSuscriptor,"END",strlen("END"));
-  close(fileDesPublicador);
-  close(fileDesSuscriptor);
-  cerrarConexion(sistema);
-
-}
-
-void cerrarConexion(struct System* sistema) {
-  unlink(sistema->pipeNomP);
-  unlink(sistema->pipeNomS);
+  close(fileDesPub);
 }
 
 void leerArgumentos(char** argv, struct System* sistema) {

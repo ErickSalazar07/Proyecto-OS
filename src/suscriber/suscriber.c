@@ -56,7 +56,7 @@ void enviarTopicos(struct Suscriber* suscriptor) {
 int topicoIngresado(char topico, char* topicos) {
   for(int i = 0; topicos[i]; i++) 
     if(topicos[i] == topico) {
-      printf("\n\nDijite otro topico, ya que el dijitado, ya se encuentra registrado.\n\n");
+      printf("\n\n\033[91mDijite otro topico, ya que el dijitado, ya se encuentra registrado.\033[0m\n\n");
       return 1;
     }
   return 0;
@@ -66,12 +66,12 @@ void pedirTopicos(struct Suscriber* suscriptor) {
   int numTopicos = 0;
   int deseaIngresarTopico = 0;
 
-  printf("\t\t\033[91mBIENVENIDO AL PROGRAMA SUSCRIPTOR\033[0m\n\n");
-  printf("\n\033[31mDebe suscribirse al menos a 1 topico\033[0m\n\n");
+  printf("\t\t\033[35mBIENVENIDO AL PROGRAMA SUSCRIPTOR\033[0m\n\n");
+  printf("\n\033[36mDebe suscribirse al menos a 1 topico\033[0m\n\n");
   
   do {
     suscriptor->topicos[numTopicos++] = obtenerTopico(suscriptor);
-    printf("Desea ingresar otro topico, dijite 1 para si 0 para no.\nDijite: ");
+    printf("\nDesea ingresar otro topico, dijite 1 para si 0 para no.\nDijite: ");
     scanf("%i",&deseaIngresarTopico);
   } while(deseaIngresarTopico && (1 <= numTopicos && numTopicos <= 5));
 
@@ -83,20 +83,19 @@ char obtenerTopico(struct Suscriber* suscriptor) {
   char c;
 
 opciones:
-  printf("1. Para Arte 'A'\n");
+  printf("\n1. Para Arte 'A'\n");
   printf("2. Para Farandula y Espectaculo 'E'\n");
   printf("3. Para Ciencia 'C'\n");
   printf("4. Para Politica 'P'\n");
   printf("5. Para Sucesos 'S'\n");
   printf("Dijite: ");
   while(scanf("%i",&opc) != 1) {
-    printf("Dijite un numero: ");
+    printf("\n\nDijite un \033[91mnumero\033[0m: ");
     while((c = getchar() != '\n' && c != EOF));
   }
   
   switch(opc) {
-    case 1:  
-      return 'A';
+    case 1: c = 'A';
     break;
     case 2: c = 'E';
     break;
@@ -106,7 +105,7 @@ opciones:
     break;
     case 5: c = 'S';
     break;
-    default: printf("\n\nDijite un una opcion valida\n\n"); goto opciones;
+    default: printf("\n\n\033[091mDijite un una opcion valida.\033[0m\n\n"); goto opciones;
   }
 
   if(!topicoIngresado(c,suscriptor->topicos))
@@ -116,7 +115,7 @@ opciones:
 
 int topicoValido(char topico) {
   if(topico == 'A' || topico == 'E' || topico == 'C' || topico == 'P' || topico == 'S') return 1;
-  printf("\n\nDijite un topico valido.\n\n");
+  printf("\n\n\033[91mDijite un topico valido.\033[0m\n\n");
   return 0;
 }
 

@@ -53,6 +53,7 @@ void escribirMensajes(struct Publisher* publicador) {
     sleep(publicador->timeN);
     memset(mensaje,0,sizeof(mensaje));
   }
+  sleep(publicador->timeN);
   write(fileDes,"END",strlen("END"));
   close(fileDes);
 }
