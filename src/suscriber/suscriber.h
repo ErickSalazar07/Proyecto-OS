@@ -9,8 +9,12 @@ struct Suscriber{
 
 void escucharMensajes(struct Suscriber*);
 void leerArgumentos(char**, struct Suscriber*);
+int topicoIngresado(char,char*);
 void pedirTopicos(struct Suscriber*);
-unsigned int perteceMensaje(struct Suscriber*,char);
+char obtenerTopico(struct Suscriber*);
+void enviarTopicos(struct Suscriber*);
+unsigned int perteneceMensaje(struct Suscriber*,char);
+int topicoValido(char);
 void mostrarInfoSuscriptor(const struct Suscriber*);
 
 #endif  // SUSCRIBER_H
