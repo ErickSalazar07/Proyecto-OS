@@ -38,5 +38,5 @@ void createSusSistema(struct SusSistema* suscriptorSis, char* mensaje) {
   strcpy(suscriptorSis->topicos,mensaje+i+1);
   unlink(id);
   mkfifo(id,0666);
-  suscriptorSis->filePipe = open(id,0666);
+  suscriptorSis->filePipe = open(id,O_WRONLY);
 }

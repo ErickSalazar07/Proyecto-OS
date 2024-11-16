@@ -12,8 +12,7 @@ int main(int argc, char** argv) {
   if(argc-1 != 6) perror("\n\nLa cantidad de parametros no es correcta.\nRevise\a\n"),exit(EXIT_FAILURE);
 
   struct System sistema;
-  initSisComunicacion(&sistema);
-  leerArgumentos(argv+1,&sistema);
+  initSisComunicacion(&sistema,argv+1);
   mostrarInfoSistema(&sistema);
   crearPipesSusSistema(&sistema);
   escucharMensajes(&sistema);
@@ -30,32 +29,36 @@ void limpiarPipes(struct System* sistema) {
 }
 
 void crearPipesSusSistema(struct System* sistema) {
-  const unsigned int PIPEMODE = 0666;
   int fileDesPipeNomS;
   struct SusSistema auxSus;
   char mensaje[20] = {0};
   
-  unlink(sistema->pipeNomS);
-  mkfifo(sistema->pipeNomS,PIPEMODE);
   
-  while((fileDesPipeNomS = open(sistema->pipeNomS,PIPEMODE)) == -1);
+  while((fileDesPipeNomS = open(sistema->pipeNomS,O_RDONLY)) == -1);
 
   while(read(fileDesPipeNomS,mensaje,sizeof(mensaje)) > 0) {
-    printf("%s\n",mensaje);
-    if(strcmp(mensaje,"END") == 0) break;
     createSusSistema(&auxSus,mensaje);
     push(&sistema->suscritos,&auxSus);
     limpiarSusSistema(&auxSus);
     memset(mensaje,0,sizeof(mensaje));
   }
+
   close(fileDesPipeNomS);
+  printf("\n\nSe crearon todos los pipes, y ya no hay mas procesos suscriptores para mandar pipes\n\n");
 }
 
-void initSisComunicacion(struct System* sistema) {
+void initSisComunicacion(struct System* sistema, char** argv) {
+  const unsigned int PIPEMODE = 0666;
+
   memset(sistema->pipeNomP,0,50);
   memset(sistema->pipeNomS,0,50);
   initStack(&sistema->suscritos);
   sistema->timeF = 0.0;
+
+  leerArgumentos(sistema,argv);
+  unlink(sistema->pipeNomS);
+  unlink(sistema->pipeNomP);
+  mkfifo(sistema->pipeNomS,PIPEMODE);
 }
 
 
@@ -64,17 +67,13 @@ void escucharMensajes(struct System* sistema) {
   int fileDesPub = 0666;
   char mensaje[80];
 
-  unlink(sistema->pipeNomP);
   mkfifo(sistema->pipeNomP,FILE_DES_PUB_MODE);
 
-  while((fileDesPub = open(sistema->pipeNomP,FILE_DES_PUB_MODE)) == -1);
+  while((fileDesPub = open(sistema->pipeNomP,O_RDONLY)) == -1);
 
-  while((read(fileDesPub,mensaje,sizeof(mensaje))) > 0) {
+  while(read(fileDesPub,mensaje,sizeof(mensaje)) > 0) {
+enviarMensajes:
     printf("%s\n",mensaje);
-    if(strcmp(mensaje,"END") == 0) {
-      close(fileDesPub);
-      return;
-    }
     switch(mensaje[0]) {
       case 'A': sendMessage(&sistema->suscritos,'A',mensaje+2,sizeof(mensaje)-2);
       break;
@@ -89,10 +88,16 @@ void escucharMensajes(struct System* sistema) {
     }
     memset(mensaje,0,sizeof(mensaje));
   }
+
+  sleep(sistema->timeF);
+
+  if(read(fileDesPub,mensaje,sizeof(mensaje)) > 0) goto enviarMensajes;
+
+  printf("\n\nSe cierra el pipe de los publicadores\n\n");
   close(fileDesPub);
 }
 
-void leerArgumentos(char** argv, struct System* sistema) {
+void leerArgumentos(struct System* sistema, char** argv) {
   for(size_t i = 0; argv[i]; i++)
     for(size_t j = 0; argv[i][j]; j++)
       if(argv[i][j] == '-')
