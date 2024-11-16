@@ -15,25 +15,15 @@ void initStack(struct Stack* pila){
 void limpiarStack(struct Stack* pila) {
   struct Node* aux = pila->cima;
 
+  sendMessage(pila,'0',NULL,0);
   while(aux) {
-    write(aux->data.filePipe,"END",strlen("END"));
-    unlink(aux->data.nombrePipe);
     close(aux->data.filePipe);
+    unlink(aux->data.nombrePipe);
+    aux = aux->next;
   }
 
-  while(!empty(*pila)) 
+  while(!empty(*pila)) // elimina todos los nodos de la pila
     pop(pila);
-}
-
-void terminarComunicacion(struct Stack* pila) {
-  struct Node* aux = pila->cima;
-
-  while(aux) {
-    write(aux->data.filePipe,"END",strlen("END"));
-    unlink(aux->data.nombrePipe);
-    close(aux->data.filePipe);
-  }
-
 }
 
 void mostrarSuscritos(struct Stack* pila) {
@@ -63,10 +53,13 @@ void sendMessage(struct Stack* pila, char topico, char* mensaje, unsigned int ta
   struct Node* aux = pila->cima;
 
   while(aux) {
-    if(topico == '0') {
+    if(topico == '1') {
       printf("\n\nMensaje general enviado a proceso \033[35msuscriptor\033[0m con pipe %s\n\n",aux->data.nombrePipe);
       write(aux->data.filePipe,mensaje,tamMensaje);
-    }else if(estaSuscrito(aux->data.topicos,topico)) {
+    } else if(topico == '0') {
+      printf("\n\nCerrando comunicacion para proceso suscriptor %s\n\n",aux->data.nombrePipe);
+      write(aux->data.filePipe,"END",strlen("END"));
+    } else if(estaSuscrito(aux->data.topicos,topico)) {
       printf("\n\nEnviando mensaje a proceso \033[35msuscriptor\033[0m con pipe %s\n\n",aux->data.nombrePipe);
       write(aux->data.filePipe,mensaje,tamMensaje);
     }
