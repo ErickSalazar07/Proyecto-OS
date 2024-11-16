@@ -22,10 +22,10 @@ int main(int argc, char** argv) {
 
 void escucharMensajes(struct Suscriber* suscriptor) {
   int fileDes;
-  const unsigned int PIPEMODE = 0666;
   char message[100] = {0};
+  
   printf("\nAbriendo: %s\n",suscriptor->pipeNominal);
-  while((fileDes = open(suscriptor->pipeNominal,PIPEMODE)) == -1);
+  while((fileDes = open(suscriptor->pipeNominal,O_RDONLY)) == -1);
 
   while((read(fileDes,message,100)) > 0) {
     if(strcmp(message,"END") == 0) { 
@@ -41,9 +41,8 @@ void escucharMensajes(struct Suscriber* suscriptor) {
 void enviarTopicos(struct Suscriber* suscriptor) {
   int fileDesPipeNomS;
   char mensaje[20] = {0};
-  const unsigned int PIPEMODE = 0666;
 
-  while((fileDesPipeNomS = open(suscriptor->pipeNominal,PIPEMODE)) == -1);
+  while((fileDesPipeNomS = open(suscriptor->pipeNominal,O_WRONLY)) == -1);
 
   sprintf(mensaje,"%d:",getpid());
   strncpy(mensaje+strlen(mensaje),suscriptor->topicos,suscriptor->numTopicos);
@@ -51,6 +50,7 @@ void enviarTopicos(struct Suscriber* suscriptor) {
   if(write(fileDesPipeNomS,mensaje,20) == -1) printf("Hubo un error");
   memset(suscriptor->pipeNominal,0,50);
   sprintf(suscriptor->pipeNominal,"%d",getpid());
+  close(fileDesPipeNomS);
 }
 
 int topicoIngresado(char topico, char* topicos) {
