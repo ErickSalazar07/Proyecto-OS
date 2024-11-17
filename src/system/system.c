@@ -8,6 +8,9 @@
 #include "SusSistema/SusSistema.h"
 #include "system.h"
 
+int fileDescriptorSub, fileDescriptorPub;
+
+
 int main(int argc, char** argv) {
   if(argc-1 != 6) perror("\n\nLa cantidad de parametros no es correcta.\nRevise\a\n"),exit(EXIT_FAILURE);
 
@@ -23,28 +26,27 @@ int main(int argc, char** argv) {
 
 void limpiarPipes(struct System* sistema) {
   printf("\n\nCERRANDO COMUNICACION\n\n\n");
+  close(fileDescriptorPub);
+  close(fileDescriptorSub);
   unlink(sistema->pipeNomP);
   unlink(sistema->pipeNomS);
   limpiarStack(&sistema->suscritos);
 }
 
 void crearPipesSusSistema(struct System* sistema) {
-  int fileDesPipeNomS;
   struct SusSistema auxSus;
   char mensaje[20] = {0};
   
   
-  while((fileDesPipeNomS = open(sistema->pipeNomS,O_RDONLY)) == -1);
+  while((fileDescriptorSub = open(sistema->pipeNomS,O_RDONLY)) == -1);
 
-  while(read(fileDesPipeNomS,mensaje,sizeof(mensaje)) > 0) {
+  while(read(fileDescriptorSub,mensaje,sizeof(mensaje)) > 0) {
     createSusSistema(&auxSus,mensaje);
     push(&sistema->suscritos,&auxSus);
+    printf("\n\nCREANDO PIPE PARA suscriber con pid = %s\n\n",auxSus.nombrePipe);
     limpiarSusSistema(&auxSus);
     memset(mensaje,0,sizeof(mensaje));
   }
-
-  close(fileDesPipeNomS);
-  printf("\n\nSe crearon todos los pipes, y ya no hay mas procesos suscriptores para mandar pipes\n\n");
 }
 
 void initSisComunicacion(struct System* sistema, char** argv) {
@@ -64,14 +66,13 @@ void initSisComunicacion(struct System* sistema, char** argv) {
 
 void escucharMensajes(struct System* sistema) {
   const unsigned int FILE_DES_PUB_MODE = 0666;
-  int fileDesPub = 0666;
   char mensaje[80];
 
   mkfifo(sistema->pipeNomP,FILE_DES_PUB_MODE);
 
-  while((fileDesPub = open(sistema->pipeNomP,O_RDONLY)) == -1);
+  while((fileDescriptorPub = open(sistema->pipeNomP,O_RDONLY)) == -1);
 
-  while(read(fileDesPub,mensaje,sizeof(mensaje)) > 0) {
+  while(read(fileDescriptorPub,mensaje,sizeof(mensaje)) > 0) {
 enviarMensajes:
     printf("%s\n",mensaje);
     switch(mensaje[0]) {
@@ -87,14 +88,19 @@ enviarMensajes:
       break;
     }
     memset(mensaje,0,sizeof(mensaje));
+    if(read(fileDescriptorSub,mensaje,sizeof(mensaje)) > 0) {
+      struct SusSistema auxSus;
+      createSusSistema(&auxSus,mensaje);
+      push(&sistema->suscritos,&auxSus);
+      printf("\n\nCREANDO PIPE PARA suscriber con pid = %s\n\n",auxSus.nombrePipe);
+      limpiarSusSistema(&auxSus);
+    }
+    memset(mensaje,0,sizeof(mensaje));
   }
 
   sleep(sistema->timeF);
+  if(read(fileDescriptorPub,mensaje,sizeof(mensaje)) > 0) goto enviarMensajes;
 
-  if(read(fileDesPub,mensaje,sizeof(mensaje)) > 0) goto enviarMensajes;
-
-  printf("\n\nSe cierra el pipe de los publicadores\n\n");
-  close(fileDesPub);
 }
 
 void leerArgumentos(struct System* sistema, char** argv) {
