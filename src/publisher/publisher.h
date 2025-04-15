@@ -15,5 +15,6 @@ void leerArgumentos(char**, struct Publisher*);
 void leerArchivo(struct Publisher*);
 void mostrarInfoPublicador(const struct Publisher*);
 bool noticiaValida(char);
+char trimHastaProximaNoticia(FILE* archivoNoticias);
 
 #endif // PUBLISHER_H

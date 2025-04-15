@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include "publisher.h"
 
@@ -67,18 +68,25 @@ void leerArchivo(struct Publisher* publicador) {
     exit(-2);
   }
 
-  for(i = 0; (chLeer = fgetc(archivo)) != EOF; i++) {
+  for(i = 0; (chLeer = trimHastaProximaNoticia(archivo)) != EOF; i++) {
     if(!noticiaValida(chLeer)) { fprintf(stderr,"\n\nHay una noticia no valida.\n\n"); exit(-3); }
     publicador->noticias[i].tipo = chLeer;
     chLeer = fgetc(archivo);
     if(chLeer != ':') { fprintf(stderr,"\n\nEl delimitar ':', no esta. Verifique.\n\n"); exit(-3); }
-    for(int j = 0; (chLeer = fgetc(archivo)) != '.'; j++) {
+    for(int j = 0; (chLeer = fgetc(archivo)) != '.'; j++)
       publicador->noticias[i].contenido[j] = chLeer;
-    }
-    fseek(archivo,2,SEEK_CUR);
   }
   publicador->numNoticias = i;
   fclose(archivo);
+}
+
+char trimHastaProximaNoticia(FILE* archivoNoticias) {
+
+  if(archivoNoticias == NULL) return EOF;
+   
+  char ch;
+  while((ch = fgetc(archivoNoticias)) != EOF && !isalpha(ch));
+  return ch;
 }
 
 bool noticiaValida(char tipo) { return tipo == 'A' || tipo == 'P' || tipo == 'S' || tipo == 'C' || tipo == 'E'; }
